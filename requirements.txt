@@ -1,1 +1,7 @@
-
+transformers 
+nltk 
+torch 
+tqdm 
+tensorboard_logger
+cytoolz 
+pyrouge 
