@@ -8,7 +8,6 @@ import torch.nn as nn
 from datasets import arxiv2
 from transformers import GPT2Tokenizer, GPT2Model, GPT2LMHeadModel
 from opt import OpenAIAdam
-from text_utils import TextEncoder
 from utils import (encode_dataset2, iter_data,
                    ResultLogger, make_path)
 from loss import SummarizationLossCompute2
