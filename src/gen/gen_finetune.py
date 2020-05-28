@@ -91,7 +91,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', type=str)
     parser.add_argument('--multiple_gpus',type=bool,default=False)
     parser.add_argument('--common_match',type=str,default='physics')
-    parser.add_argument('--log_dir', type=str, default=',./log')
+    parser.add_argument('--log_dir', type=str, default='./log')
     parser.add_argument('--save_dir', type=str, default='./gpt2')
     parser.add_argument('--data_dir', type=str, default='./data')
     parser.add_argument('--seed', type=int, default=42)
