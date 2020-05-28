@@ -24,10 +24,7 @@ def transform_ab(X1,X2):
 
 def iter_apply(Xs, Ys):
     logits = []
-    cost = 0
     losses = []
-    all_preds = []
-    maj_acc = []
     with torch.no_grad():
         dh_model.eval()
         for xmb, ymb in iter_data(Xs, Ys, n_batch=n_batch_train, truncate=False, verbose=True):
@@ -36,26 +33,19 @@ def iter_apply(Xs, Ys):
             YMB = torch.tensor(ymb, dtype=torch.long).to(device)
             outputs = dh_model(XMB,next_sentence_label=YMB)
             loss, scores = outputs[:2]
-            preds = torch.argmax(torch.nn.functional.softmax(scores,dim=1),dim=1)
-            maj_acc.extend([int(YMB[i]) for i in range(XMB.size(0))])
-            all_preds.extend([int(preds[i]) == int(YMB[i]) for i in range(XMB.size(0))])
             losses.append(float(loss))
-    acc = np.mean(all_preds)
-    maj_acc = max(np.mean(maj_acc),1-np.mean(maj_acc))
-    return np.sum(losses), np.mean(losses), acc, maj_acc
+    return np.sum(losses), np.mean(losses)
 
 def log(save_dir, desc,iter=0,save=''):
     global best_score
     print("Logging")
-    tr_sum_loss, tr_mean_loss, tr_acc, tr_maj_acc = iter_apply(trX[:n_valid], trY[:n_valid])
-    va_sum_loss, va_mean_loss, va_acc, va_maj_acc  = iter_apply(vaX[:n_valid], vaY[:n_valid])
+    tr_sum_loss, tr_mean_loss = iter_apply(trX[:n_valid], trY[:n_valid])
+    va_sum_loss, va_mean_loss = iter_apply(vaX[:n_valid], vaY[:n_valid])
     log_value('va_sum_loss',va_sum_loss,n_updates)
     log_value('va_mean_loss',va_mean_loss,n_updates)
-    print('Accuracy: ' + str(va_acc))
-    print('Majority accuracy: ' + str(va_maj_acc))
-    log_value('va_acc',va_acc,n_updates)
-    log_value('tr_acc',tr_acc,n_updates)
-    logger.log(n_epochs=n_epochs, n_updates=n_updates, tr_cost=tr_acc, va_cost=va_acc, tr_acc=float(tr_mean_loss), va_acc=float(va_mean_loss))
+    log_value('tr_mean_loss',tr_mean_loss,n_updates)
+    log_value('tr_sum_loss',tr_sum_loss,n_updates)
+    logger.log(n_epochs=n_epochs, n_updates=n_updates, tr_cost=float(tr_mean_loss), va_cost=float(va_mean_loss), tr_acc=float(tr_sum_loss), va_acc=float(va_sum_loss))
     print('%d %d %.3f %.3f %.2f %.2f' % (n_epochs, n_updates, tr_sum_loss, va_sum_loss, tr_mean_loss, va_mean_loss))
     path = os.path.join(save_dir, desc, 'best_params_' + str(iter) + save)
     torch.save(dh_model.state_dict(), make_path(path))
@@ -63,7 +53,6 @@ def log(save_dir, desc,iter=0,save=''):
 def run_epoch(iter):
     losses = []
     i = 0
-    all_preds = []
     for xmb,ymb in iter_data(*shuffle(trX, trY, random_state=np.random),
                                    n_batch=n_batch_train, truncate=True, verbose=True):
         global n_updates
@@ -73,9 +62,6 @@ def run_epoch(iter):
         scores = dh_model(XMB)
         scores = scores[0]
         loss = loss_function(scores.view(-1,2),YMB.view(-1))
-        preds = torch.argmax(torch.nn.functional.softmax(scores,dim=1),dim=1)
-        all_preds.extend([int(preds[i]) == int(YMB[i]) for i in range(XMB.size(0))])
-        acc = np.mean(all_preds) 
         losses.append(float(loss))
         loss.backward()
         model_opt.step()
