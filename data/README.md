@@ -1,4 +1,4 @@
-Discriminator Data: 
+Discriminator data: 
 
 adv_sents.jsonl
 
